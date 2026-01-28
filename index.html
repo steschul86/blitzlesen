@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>Blitzlesen – Sichtwortschatz (NRW)</title>
+  <style>
+    :root { --p:#3b82f6; --bg:#f8fafc; --t:#1e293b; --s:#10b981; --e:#ef4444; }
+    body{
+      font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--t);
+      margin:0;display:flex;align-items:center;justify-content:center;height:100vh;overflow:hidden;
+    }
+    .box{
+      background:#fff;padding:2rem;border-radius:1.5rem;
+      box-shadow:0 10px 25px rgba(0,0,0,.1);
+      width:95%;max-width:650px;text-align:center;
+    }
+    .flash-area{
+      font-weight:800;min-height:1.5em;margin:1rem 0;
+      display:flex;align-items:center;justify-content:center;color:var(--p);
+      white-space:nowrap;
+    }
+    .grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:1rem; }
+    .btn{
+      padding:1.2rem;border:none;border-radius:.8rem;background:var(--p);
+      color:#fff;font-weight:800;cursor:pointer;font-size:1.15rem;
+      touch-action: manipulation;
+    }
+    .opt{
+      background:#f1f5f9;color:var(--t);border:2px solid #e2e8f0;font-weight:800;
+    }
+    .correct{ background:var(--s)!important;color:#fff;border-color:var(--s); }
+    .wrong{ background:var(--e)!important;color:#fff;border-color:var(--e); }
+
+    .control-group{
+      background:#f1f5f9;padding:15px;border-radius:12px;margin-bottom:1rem;text-align:left;
+    }
+    .speed-control{ display:flex; align-items:center; gap:15px; }
+    .speed-icon{ font-size:1.5rem; }
+    input[type=range]{ flex:1; cursor:pointer; direction:rtl; }
+    .hide{ display:none; }
+    #timer-display{ font-weight:900; color:var(--e); font-size:1.2rem; margin-bottom:10px; }
+    .small-note{ font-size:.95rem; color:#475569; margin-top:.35rem; }
+    select.sel{
+      width:100%;background:#fff;color:#000;border:2px solid var(--p);margin:10px 0;
+      padding:1rem;border-radius:.8rem;font-weight:800;font-size:1.05rem;
+    }
+  </style>
+</head>
+<body>
+
+<div id="setup" class="box">
+  <h2>⚡ Blitzlesen – Sichtwortschatz (NRW)</h2>
+
+  <div class="control-group">
+    <label><b>1. Trainingsbereich wählen:</b></label>
+    <select id="lvl" class="sel">
+      <option value="1">Stufe 1: Funktions-/Merkwörter</option>
+      <option value="2">Stufe 2: Basiswörter (3–7 Buchstaben)</option>
+      <option value="3">Stufe 3: Muster-Fokus (Zufall: sch / ch / Doppel)</option>
+      <option value="4">Stufe 4: Längere Wörter (≥ 8 Buchstaben)</option>
+    </select>
+  </div>
+
+  <div class="control-group">
+    <label><b>2. Trainingszeit:</b></label>
+    <select id="duration" class="sel">
+      <option value="60">1 Minute</option>
+      <option value="120" selected>2 Minuten</option>
+      <option value="240">4 Minuten</option>
+    </select>
+  </div>
+
+  <div class="control-group">
+    <label><b>3. Geschwindigkeit:</b></label>
+    <div class="speed-control">
+      <span class="speed-icon">🐌</span>
+      <input type="range" id="sld" min="300" max="2500" step="100" value="1300">
+      <span class="speed-icon">🐰</span>
+    </div>
+    <div class="small-note">Empfohlener Startwert – frei veränderbar.</div>
+  </div>
+
+  <button class="btn" style="width:100%;font-size:1.5rem;" onclick="start()">Start!</button>
+</div>
+
+<div id="game" class="box hide">
+  <div id="timer-display">Zeit: --:--</div>
+  <div id="word" class="flash-area"></div>
+  <div id="opts" class="grid"></div>
+  <button class="btn hide" id="next" style="margin-top:1.5rem;width:100%;background:#1e293b" onclick="round()">Nächstes Wort ➔</button>
+</div>
+
+<div id="result" class="box hide">
+  <h2>🏁 Training beendet!</h2>
+  <div style="font-size:4rem;margin:20px 0;">🌟</div>
+  <p style="font-size:1.5rem;">Richtig: <b id="score-count">0</b></p>
+  <button class="btn" style="width:100%" onclick="location.reload()">Nochmal üben</button>
+</div>
+
+<script>
+  const ALL_WORDS = [...new Set([
+    "ab","Abend","aber","Advent","Affe","Afrika","alle","allein","als","also","alt","am","Amerika","an","andere","Angst","antworten","Apfel","Arzt","Asien","auch","auf","aufpassen","aufwachen","Auge","aus","außerdem","Australien","Auto","bald","Ball","Banane","bauen","Baum","befehlen","befiehlt","begegnen","bei","Beispiel","bekommen","belohnen","Berg","besiegen","besser","beste","Bett","bevor","bin","Birne","bis","bisschen","bist","bitten","bleiben","Boot","böse","brauchen","Brief","bringen","Brot","Bruder","brummen","Buch","Burg","Bus","Cent","Chor","Computer","da","danach","dann","darf","das","davor","dein","denken","denn","der","Detektiv","dich","die","Dieb","Dienstag","dies","dir","doch","Donnerstag","doof","doppelt","dort","Dose","draußen","drei","dumm","durch","dürfen","Durst","Ei","eigentlich","Eimer","ein","einmal","eins","Eis","Elefant","Eltern","endlich","er","Erdbeere","Ergebnis","erklären","erschrecken","erschrickt","erstens","erzählen","es","essen","euch","Eule","Europa","fahren","fast","fehlen","Ferien","Fernseher","fertig","Feuerwehr","finden","Fisch","Flasche","fliegen","Flugzeug","fragen","Frau","Freitag","fressen","freuen","Freund","frisst","Frühstück","Fuchs","für","Fuß","füttern","Gabel","ganz","geben","Geburt","gefährlich","gefallen","gehen","gelb","genug","gerade","gern","geschehen","Geschichte","gestern","gesund","gewinnen","Gewitter","gibt","gießen","Giraffe","Glück","groß","Gruppe","grüßen","gucken","Haar","haben","halb","hallo","halten","Hand","Handy","Hase","hat","hatte","Haus","Heft","heißen","helfen","heraus","herein","heute","Hexe","hier","hilft","hinein","hinter","hoffen","hören","Hose","Hummel","Hund","Hunger","hungrig","ich","Idee","ihm","ihn","ihr","im","immer","in","ins","ist","isst","ja","Jacke","Jahr","jede","jetzt","jung","Junge","kämpfen","kann","kaputt","Karten","Käse","Katze","kaufen","kein","kennen","Kind","Kirche","Kirsche","klappen","Klasse","klein","klettern","klug","Knopf","kochen","kommen","können","Kopf","Korb","krabbeln","Kreuz","kriegen","Küche","Kuh","kurz","lachen","lang","langsam","lässt","lassen","Laub","läuft","laufen","leer","Lehrer","lernen","lesen","letzte","lieb","liegen","liest","Löffel","löschen","loslassen","Löwe","machen","mag","malen","Mama","man","Mann","Mappe","Maus","Meer","mehr","mein","meistens","Messer","mich","Milch","Minute","mir","mit","mitnehmen","Mittag","Mittwoch","möchten","mögen","Mond","Montag","morgen","Mund","müssen","muss","Mutter","Mütze","nach","Nachbar","Nachmittag","nächste","Nähe","nämlich","Nase","Nashorn","nehmen","nein","Nest","nett","neu","nicht","nichts","nie","nimmt","nirgendwo","noch","Note","nun","nur","ob","oder","oft","ohne","Oma","Opa","paar","Papa","Papagei","Pappe","passieren","Pferd","Pflanze","Pflaster","pflücken","Pinsel","Platz","plötzlich","Pullover","Puppe","Rauch","rechnen","Regen","reiten","rennen","Rettung","Rock","rufen","ruhig","Sache","sagen","sammeln","Samstag","Schaf","schaffen","Schal","schauen","Schaufel","Schaukel","schaukeln","schenken","Schiff","schimpfen","schläft","schlafen","schlecht","schlimm","Schloss","Schluss","Schmetterling","schmutzig","Schnee","schneiden","schnell","Schnupfen","schon","schön","Schrank","schrecklich","schreiben","schreien","Schule","schwarz","Schwein","schwimmen","See","sehen","sehr","sein","seit","Seite","selbst","sich","sie","sieht","sind","singen","sitzen","sollen","Sonne","Sonntag","Spaß","spät","Spiegel","spielen","Spinne","Sport","springen","spritzen","Stadt","stehen","steigen","Stein","stellen","Stern","Straße","streiten","Stück","Stunde","süß","Tafel","Tag","Tasche","Tasse","Teller","Tipp","tippen","Tisch","Tod","toll","tot","trägt","tragen","Treppe","trinken","tun","über","Uhr","Uhu","um","und","Ungeheuer","uns","unter","Urlaub","Vampir","Vater","verbieten","verdoppeln","vergessen","vergisst","Verkäufer","verletzen","verlieren","vermissen","verrückt","versprechen","verspricht","verstecken","versuchen","viel","vielleicht","vier","Vogel","voll","vom","von","vor","voraus","vorbei","Vorfahrt","Vorname","Vorschlag","vorsichtig","Vorteil","Waage","wachen","wächst","wachsen","wahr","Wald","wann","warum","was","Wasser","weg","Weg","Weihnachten","weil","Weile","weinen","weiß","weiter","welcher","Welt","wem","wen","wenig","wenn","wer","werden","werfen","wie","wieder","will","wir","wird","wirft","wissen","wohnen","Wolke","wollen","wütend","Zahn","Zeit","Ziege","ziehen","Zimmer","Zitrone","Zoo","zu","zuerst","Zug","zum","zur","zurück","zusammen","zwei"
+  ])];
+
+  const LEVEL1 = ["ab","aber","als","also","am","an","auch","auf","aus","bei","bin","bis","da","dann","das","der","die","dir","doch","ein","er","es","für","ganz","hat","heute","hier","ich","im","in","ist","ja","jetzt","kann","mit","nicht","nur","oder","und","von","zu","zur","zwei"];
+  const LEVEL2 = ALL_WORDS.filter(w => w.length>=3 && w.length<=7 && !/(sch|ch)/i.test(w));
+  const FOCUS_SCH = ALL_WORDS.filter(w => /sch/i.test(w));
+  const FOCUS_CH  = ALL_WORDS.filter(w => /ch/i.test(w) && !/sch/i.test(w));
+  const FOCUS_DOUBLE = ALL_WORDS.filter(w => /(ll|mm|nn|tt|rr|ff|ss)/i.test(w));
+  const LEVEL4 = ALL_WORDS.filter(w => w.length>=8);
+
+  const defaultSpeedByLevel = {1:1300,2:1000,3:1400,4:850};
+
+  let currentLvl=1, currentFocus="sch", displayTime=1200, timeLeft=120, score=0, gameActive=false, gameTimer=null, currentWord="";
+  let sessionQueue=[];
+
+  const lvlSel=document.getElementById("lvl");
+  const sld=document.getElementById("sld");
+
+  function applyRecommendedSpeed(){ sld.value=defaultSpeedByLevel[parseInt(lvlSel.value,10)]||1200; }
+  lvlSel.addEventListener("change", applyRecommendedSpeed);
+  applyRecommendedSpeed();
+
+  function randInt(n){return Math.floor(Math.random()*n);}
+  function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+
+  function setWordDisplay(text){
+    const el=document.getElementById("word");
+    el.innerText=text;
+    const len=text.length;
+    el.style.fontSize = len>=12?"3rem":len>=9?"3.4rem":"4rem";
+  }
+
+  function similarityScore(a,b){
+    a=a.toLowerCase(); b=b.toLowerCase();
+    let pos=0; for(let i=0;i<Math.min(a.length,b.length);i++) if(a[i]===b[i]) pos++;
+    const big=(s)=>{const r=new Set(); for(let i=0;i<s.length-1;i++) r.add(s.slice(i,i+2)); return r;}
+    let inter=0; const A=big(a), B=big(b); for(const x of A) if(B.has(x)) inter++;
+    return pos*2+inter;
+  }
+
+  function swapOneChar(word){
+    const letters="abcdefghijklmnopqrstuvwxyz"; const v=["a","e","i","o","u"];
+    const l=word.toLowerCase().split(""); const i=randInt(l.length); const c=l[i];
+    if(v.includes(c)){ const vv=v.filter(x=>x!==c); l[i]=vv[randInt(vv.length)]; }
+    else{ let r=letters[randInt(letters.length)]; while(r===c) r=letters[randInt(letters.length)]; l[i]=r; }
+    return (word[0]===word[0].toUpperCase()? l.join("").replace(/^./,l[0].toUpperCase()):l.join(""));
+  }
+
+  function createDistsFromPool(target,pool,focus=null){
+    const t=target.toLowerCase();
+    let cand=pool.filter(w=>w.toLowerCase()!==t && Math.abs(w.length-target.length)<=1);
+    if(cand.length<8) cand=pool.filter(w=>w.toLowerCase()!==t);
+    const ranked=cand.map(w=>({w,s:similarityScore(target,w)})).sort((a,b)=>b.s-a.s).map(x=>x.w);
+
+    let d=new Set();
+    if(ranked.length) d.add(ranked[0]);
+
+    if(focus){
+      const pat=ranked.filter(w=>{
+        if(focus==="sch") return /sch/i.test(w);
+        if(focus==="ch") return /ch/i.test(w) && !/sch/i.test(w);
+        return /(ll|mm|nn|tt|rr|ff|ss)/i.test(w);
+      }).find(w=>!d.has(w));
+      if(pat) d.add(pat);
+    }
+
+    const neutral=ranked.slice(3).filter(w=>!d.has(w));
+    if(neutral.length) d.add(neutral[randInt(neutral.length)]);
+    for(const w of ranked){ if(d.size>=3) break; if(!d.has(w)) d.add(w); }
+    while(d.size<3){ const f=swapOneChar(target); if(f.toLowerCase()!==t) d.add(f); }
+    return [...d];
+  }
+
+  function getPool(){
+    const lvl=parseInt(currentLvl,10);
+    if(lvl===1) return LEVEL1;
+    if(lvl===2) return LEVEL2;
+    if(lvl===3) return currentFocus==="sch"?FOCUS_SCH:currentFocus==="ch"?FOCUS_CH:FOCUS_DOUBLE;
+    return LEVEL4;
+  }
+
+  function refillQueue(pool){ sessionQueue=shuffle([...pool]); }
+
+  function start(){
+    if(gameTimer) clearInterval(gameTimer);
+    currentLvl=lvlSel.value;
+    
+    if(parseInt(currentLvl,10) === 3) {
+      const options = ["sch", "ch", "double"];
+      currentFocus = options[randInt(3)];
+    }
+
+    displayTime=parseInt(sld.value,10);
+    timeLeft=parseInt(document.getElementById("duration").value,10);
+    score=0; gameActive=true;
+    document.getElementById("setup").classList.add("hide");
+    document.getElementById("game").classList.remove("hide");
+    refillQueue(getPool());
+    startTimer(); round();
+  }
+
+  function startTimer(){
+    const td=document.getElementById("timer-display");
+    td.innerText=`Zeit: ${Math.floor(timeLeft/60)}:${String(timeLeft%60).padStart(2,"0")}`;
+    gameTimer=setInterval(()=>{
+      timeLeft--;
+      td.innerText=`Zeit: ${Math.floor(timeLeft/60)}:${String(timeLeft%60).padStart(2,"0")}`;
+      if(timeLeft<=0){ clearInterval(gameTimer); endGame(); }
+    },1000);
+  }
+
+  function round(){
+    if(!gameActive) return;
+    displayTime=parseInt(sld.value,10);
+    const pool=getPool();
+    if(!sessionQueue.length) refillQueue(pool);
+    currentWord=sessionQueue.pop();
+
+    const o=document.getElementById("opts"); const n=document.getElementById("next");
+    n.classList.add("hide"); o.innerHTML=""; o.style.pointerEvents="auto";
+
+    setWordDisplay(currentWord);
+    setTimeout(()=>{
+      setWordDisplay("???");
+      const focus=(parseInt(currentLvl,10)===3)?currentFocus:null;
+      const dists=createDistsFromPool(currentWord, pool.length?pool:ALL_WORDS, focus);
+      const opts=[currentWord,...dists].sort(()=>Math.random()-0.5);
+      opts.forEach(c=>{
+        const b=document.createElement("button");
+        b.className="btn opt"; b.innerText=c;
+        b.onclick=()=>check(b,c);
+        o.appendChild(b);
+      });
+    },displayTime);
+  }
+
+  function check(btn,choice){
+    const all=document.querySelectorAll(".opt");
+    all.forEach(b=>b.disabled=true);
+    document.getElementById("opts").style.pointerEvents="none";
+    if(choice===currentWord){ btn.classList.add("correct"); score++; }
+    else{ btn.classList.add("wrong"); all.forEach(b=>{if(b.innerText===currentWord) b.classList.add("correct");}); }
+    document.getElementById("next").classList.remove("hide");
+  }
+
+  function endGame(){
+    gameActive=false;
+    document.getElementById("game").classList.add("hide");
+    document.getElementById("result").classList.remove("hide");
+    document.getElementById("score-count").innerText=score;
+  }
+
+  window.start=start;
+  window.round=round;
+</script>
+</body>
+</html>
